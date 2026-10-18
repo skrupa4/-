@@ -52,7 +52,7 @@
         .left-actions {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .date-title {
@@ -60,6 +60,29 @@
             font-weight: 600;
             color: var(--text-muted);
             text-transform: capitalize;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .day-nav-btn {
+            background: var(--surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            color: var(--text-muted);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.15s, background 0.2s, color 0.2s;
+        }
+
+        .day-nav-btn:active {
+            transform: scale(0.85);
+            background: var(--surface-light);
+            color: var(--text);
         }
 
         .icon-btn, .x2-btn {
@@ -268,7 +291,7 @@
             pointer-events: auto;
             box-shadow: 0 8px 25px rgba(0,0,0,0.5);
             transition: transform 0.2s, background 0.2s;
-            position: relative; /* Для тултипа */
+            position: relative;
         }
 
         .fab:active { transform: scale(0.92); }
@@ -472,7 +495,6 @@
             outline: none;
         }
 
-
         .theme-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -492,20 +514,92 @@
         .theme-blue { background: #101626; }
         .theme-green { background: #0f1c15; }
         .theme-graphite { background: #1a1a1a; }
-
-
-        .period-card {
+        
+        .period-wrapper {
             background: var(--surface-light);
             border-radius: 16px;
-            padding: 18px;
             margin-bottom: 12px;
+            overflow: hidden;
+            transition: background 0.3s ease;
+        }
+        
+        .period-card {
+            padding: 18px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            cursor: pointer;
+            user-select: none;
         }
+        
         .period-info h4 { font-size: 13px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; text-transform: uppercase;}
         .period-info p { font-size: 15px; font-weight: 600; }
         .period-money { color: var(--accent); font-size: 18px; font-weight: 700; }
+        
+        .period-arrow {
+            color: var(--text-muted);
+            font-size: 18px;
+            transition: transform 0.3s ease;
+            margin-left: 10px;
+        }
+        
+        .period-wrapper.open .period-arrow {
+            transform: rotate(180deg);
+        }
+        
+        .period-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background: rgba(0,0,0,0.15);
+        }
+        
+        .period-wrapper.open .period-details {
+            max-height: 500px; 
+            overflow-y: auto;
+        }
+
+        .day-stat-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 18px;
+            border-top: 1px solid rgba(255,255,255,0.03);
+        }
+        
+        .day-stat-date {
+            font-size: 14px;
+            font-weight: 600;
+            width: 40px;
+            color: var(--text-muted);
+        }
+        
+        .day-stat-bar-container {
+            flex-grow: 1;
+            margin: 0 15px;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .bar-normal {
+            background: var(--accent);
+            height: 100%;
+        }
+        
+        .bar-escalated {
+            background: var(--accent-purple);
+            height: 100%;
+        }
+        
+        .day-stat-money {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+            min-width: 60px;
+            text-align: right;
+        }
 
         @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.1); color: #fff; } 100% { transform: scale(1); } }
         .animate { animation: pop 0.3s ease; display: inline-block;}
@@ -533,7 +627,9 @@
 
     <div class="top-bar">
         <div class="left-actions">
+            <button class="day-nav-btn" onclick="changeDay(-1)" aria-label="Предыдущий день">←</button>
             <div class="date-title" id="currentDateDisplay">18 октября</div>
+            <button class="day-nav-btn" onclick="changeDay(1)" aria-label="Следующий день">→</button>
         </div>
         
         <div style="display: flex; gap: 10px;">
@@ -672,24 +768,37 @@
                 <h2>Статистика за месяц</h2>
                 <button class="close-btn" onclick="closeModal()">✕</button>
             </div>
-            
-            <div class="period-card">
-                <div class="period-info">
-                    <h4>1 — 15 число</h4>
-                    <p id="period1Calls">0 звонков</p>
+            <div class="period-wrapper" id="periodWrapper1">
+                <div class="period-card" onclick="togglePeriod('periodWrapper1')">
+                    <div class="period-info">
+                        <h4>1 — 15 число</h4>
+                        <p id="period1Calls">0 звонков</p>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <div class="period-money" id="period1Money">0.00 БО</div>
+                        <div class="period-arrow">▼</div>
+                    </div>
                 </div>
-                <div class="period-money" id="period1Money">0.00 БО</div>
+                <div class="period-details" id="period1Details">
+                </div>
             </div>
             
-            <div class="period-card">
-                <div class="period-info">
-                    <h4>16 — 31 число</h4>
-                    <p id="period2Calls">0 звонков</p>
+            <div class="period-wrapper" id="periodWrapper2">
+                <div class="period-card" onclick="togglePeriod('periodWrapper2')">
+                    <div class="period-info">
+                        <h4>16 — 31 число</h4>
+                        <p id="period2Calls">0 звонков</p>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <div class="period-money" id="period2Money">0.00 БО</div>
+                        <div class="period-arrow">▼</div>
+                    </div>
                 </div>
-                <div class="period-money" id="period2Money">0.00 БО</div>
+                <div class="period-details" id="period2Details">
+                </div>
             </div>
 
-            <div class="period-card" style="background: transparent; border: 1px solid rgba(255,204,0,0.2);">
+            <div class="period-card" style="background: transparent; border: 1px solid rgba(255,204,0,0.2); margin-top: 12px;">
                 <div class="period-info">
                     <h4 style="color: var(--accent);">Всего за месяц</h4>
                     <p id="monthTotalCalls">0 звонков</p>
@@ -778,6 +887,11 @@
             if (event && event.target !== event.currentTarget) return;
             document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('active'));
         }
+        
+        function togglePeriod(id) {
+            const wrapper = document.getElementById(id);
+            wrapper.classList.toggle('open');
+        }
 
         function getDaysInMonth(year, month) { return new Date(year, month + 1, 0).getDate(); }
         function formatDateKey(dateObj) {
@@ -785,6 +899,13 @@
             const m = String(dateObj.getMonth() + 1).padStart(2, '0');
             const d = String(dateObj.getDate()).padStart(2, '0');
             return `${y}-${m}-${d}`;
+        }
+
+        function changeDay(direction) {
+            currentDate.setDate(currentDate.getDate() + direction);
+            viewDate = new Date(currentDate);
+            renderCalendar();
+            updateStatsForDay(true);
         }
 
         function renderCalendar() {
@@ -823,7 +944,6 @@
                 if (dayData) {
                     const dotsDiv = document.createElement('div');
                     dotsDiv.className = 'dots';
-                    // Точки в календаре тоже не учитывают rr как звонок
                     const totalCalls = dayData.resolved + dayData.escalated;
                     if (totalCalls > 0) {
                         if (dayData.escalated > 0) dotsDiv.innerHTML += '<div class="dot purple"></div>';
@@ -834,6 +954,7 @@
 
                 cell.onclick = () => {
                     currentDate = new Date(year, month, i);
+                    viewDate = new Date(currentDate);
                     renderCalendar(); 
                     updateStatsForDay(); 
                     closeModal(); 
@@ -879,15 +1000,12 @@
 
         function updateSummary() {
             const day = getDayData();
-            // rr не считается звонком
             const totalCalls = day.resolved + day.escalated;
             
             const pRes = parseFloat(priceResolvedInput.value) || 0;
             const pEsc = parseFloat(priceEscalatedInput.value) || 0;
             
-            // Только resolved и escalated влияют на заработок
             let earning = (day.resolved * pRes) + (day.escalated * pEsc);
-            
             if (day.isX2) earning *= 2;
             
             const escPercent = totalCalls > 0 ? ((day.escalated / totalCalls) * 100).toFixed(1) : 0;
@@ -914,6 +1032,9 @@
         function calculatePeriods(pRes, pEsc) {
             let p1Calls = 0, p1Money = 0;
             let p2Calls = 0, p2Money = 0;
+            
+            let p1Days = [];
+            let p2Days = [];
 
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
@@ -922,21 +1043,26 @@
             for (const [dateStr, d] of Object.entries(data)) {
                 if (dateStr.startsWith(prefix)) {
                     const dDay = parseInt(dateStr.split('-')[2]);
-                    // rr не считается звонком
                     const calls = d.resolved + d.escalated;
                     
-                    // Только resolved и escalated оплачиваются
                     let money = (d.resolved * pRes) + (d.escalated * pEsc);
-                    
                     if (d.isX2) money *= 2;
+                    if (calls === 0) continue;
+
+                    const dayObj = { day: dDay, calls, resolved: d.resolved, escalated: d.escalated, money };
 
                     if (dDay <= 15) {
                         p1Calls += calls; p1Money += money;
+                        p1Days.push(dayObj);
                     } else {
                         p2Calls += calls; p2Money += money;
+                        p2Days.push(dayObj);
                     }
                 }
             }
+            
+            p1Days.sort((a, b) => a.day - b.day);
+            p2Days.sort((a, b) => a.day - b.day);
 
             document.getElementById('period1Calls').innerText = `${p1Calls} звонков`;
             document.getElementById('period1Money').innerText = `${p1Money.toFixed(2)} БО`;
@@ -944,6 +1070,49 @@
             document.getElementById('period2Money').innerText = `${p2Money.toFixed(2)} БО`;
             document.getElementById('monthTotalCalls').innerText = `${p1Calls + p2Calls} звонков`;
             document.getElementById('monthTotalMoney').innerText = `${(p1Money + p2Money).toFixed(2)} БО`;
+            
+            renderDayDetails('period1Details', p1Days);
+            renderDayDetails('period2Details', p2Days);
+        }
+
+        function renderDayDetails(containerId, daysArray) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = ''; // Очищаем
+            
+            if (daysArray.length === 0) {
+                container.innerHTML = '<div style="padding: 15px; text-align: center; color: var(--text-muted); font-size: 14px;">Нет данных за этот период</div>';
+                return;
+            }
+
+            daysArray.forEach(d => {
+                const total = d.resolved + d.escalated;
+                const normalPercent = total > 0 ? (d.resolved / total) * 100 : 0;
+                const escPercent = total > 0 ? (d.escalated / total) * 100 : 0;
+
+                const row = document.createElement('div');
+                row.className = 'day-stat-row';
+                
+                row.innerHTML = `
+                    <div class="day-stat-date">${d.day} окт</div>
+                    <div class="day-stat-bar-container">
+                        <div class="bar-normal" style="width: ${normalPercent}%"></div>
+                        <div class="bar-escalated" style="width: ${escPercent}%"></div>
+                    </div>
+                    <div class="day-stat-money">${d.money.toFixed(2)}</div>
+                `;
+
+                row.style.cursor = 'pointer';
+                row.onclick = (e) => {
+                    e.stopPropagation();
+                    currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), d.day);
+                    viewDate = new Date(currentDate);
+                    renderCalendar();
+                    updateStatsForDay();
+                    closeModal();
+                };
+
+                container.appendChild(row);
+            });
         }
 
         function resetAll() {
