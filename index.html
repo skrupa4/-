@@ -811,7 +811,8 @@
                 if (dayData) {
                     const dotsDiv = document.createElement('div');
                     dotsDiv.className = 'dots';
-                    const totalCalls = dayData.resolved + dayData.escalated + dayData.rr;
+                    // Точки в календаре тоже не учитывают rr как звонок
+                    const totalCalls = dayData.resolved + dayData.escalated;
                     if (totalCalls > 0) {
                         if (dayData.escalated > 0) dotsDiv.innerHTML += '<div class="dot purple"></div>';
                         if (totalCalls > dayData.escalated || dayData.escalated === 0) dotsDiv.innerHTML += '<div class="dot yellow"></div>';
@@ -866,13 +867,14 @@
 
         function updateSummary() {
             const day = getDayData();
-            const totalCalls = day.resolved + day.escalated + day.rr;
+            // rr не считается звонком
+            const totalCalls = day.resolved + day.escalated;
             
             const pRes = parseFloat(priceResolvedInput.value) || 0;
             const pEsc = parseFloat(priceEscalatedInput.value) || 0;
             
-            const normalCalls = day.resolved + day.rr;
-            let earning = (normalCalls * pRes) + (day.escalated * pEsc);
+            // Только resolved и escalated влияют на заработок
+            let earning = (day.resolved * pRes) + (day.escalated * pEsc);
             
             if (day.isX2) earning *= 2;
             
@@ -908,10 +910,11 @@
             for (const [dateStr, d] of Object.entries(data)) {
                 if (dateStr.startsWith(prefix)) {
                     const dDay = parseInt(dateStr.split('-')[2]);
-                    const calls = d.resolved + d.escalated + d.rr;
+                    // rr не считается звонком
+                    const calls = d.resolved + d.escalated;
                     
-                    const normal = d.resolved + d.rr;
-                    let money = (normal * pRes) + (d.escalated * pEsc);
+                    // Только resolved и escalated оплачиваются
+                    let money = (d.resolved * pRes) + (d.escalated * pEsc);
                     
                     if (d.isX2) money *= 2;
 
