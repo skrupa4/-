@@ -37,7 +37,7 @@
             padding: 20px;
             padding-bottom: 100px;
             overflow-x: hidden;
-            transition: background-color 0.4s ease;
+            transition: background-color 0.4s ease, color 0.4s ease;
         }
 
         .top-bar {
@@ -200,7 +200,7 @@
 
         .btn-action:active {
             transform: scale(0.85);
-            background-color: rgba(255,255,255,0.15);
+            background-color: rgba(128, 128, 128, 0.2);
         }
 
         .bottom-summary {
@@ -278,7 +278,7 @@
         }
 
         .summary-stats span { color: var(--text); font-weight: 600; }
-        .summary-stats .divider { color: rgba(255,255,255,0.1); font-weight: 300; }
+        .summary-stats .divider { color: rgba(128,128,128,0.3); font-weight: 300; }
         .summary-stats .esc-text { color: var(--accent-purple); }
 
         .fab-container {
@@ -402,6 +402,7 @@
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+            color: var(--text);
         }
 
         .modal-overlay.active .modal-content { transform: translateY(0); }
@@ -528,7 +529,7 @@
 
         .theme-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 10px;
         }
         .theme-btn {
@@ -545,6 +546,8 @@
         .theme-blue { background: #101626; }
         .theme-green { background: #0f1c15; }
         .theme-pink { background: linear-gradient(135deg, #ff33a1, #ff8dc7); }
+        .theme-white { background: #f4f4f5; }
+        .theme-red { background: linear-gradient(135deg, #cc0000, #ff3333); }
 
         .period-wrapper {
             background: var(--surface-light);
@@ -585,7 +588,7 @@
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease;
-            background: rgba(0,0,0,0.15);
+            background: rgba(0,0,0,0.05);
         }
         
         .period-wrapper.open .period-details {
@@ -611,7 +614,7 @@
             flex-grow: 1;
             margin: 0 15px;
             height: 6px;
-            background: rgba(255,255,255,0.1);
+            background: rgba(128,128,128,0.2);
             border-radius: 3px;
             display: flex;
             overflow: hidden;
@@ -635,7 +638,20 @@
             text-align: right;
         }
 
-        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.1); color: #fff; } 100% { transform: scale(1); } }
+        .stats-month-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 10px;
+            background: var(--surface-light);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .stats-month-nav h3 { font-size: 16px; font-weight: 600; }
+
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.1); color: var(--accent); } 100% { transform: scale(1); } }
         .animate { animation: pop 0.3s ease; display: inline-block;}
 
         @media (max-width: 400px) {
@@ -784,6 +800,8 @@
                     <button class="theme-btn theme-blue" onclick="setTheme('blue', this)"></button>
                     <button class="theme-btn theme-green" onclick="setTheme('green', this)"></button>
                     <button class="theme-btn theme-pink" onclick="setTheme('pink', this)"></button>
+                    <button class="theme-btn theme-white" onclick="setTheme('white', this)"></button>
+                    <button class="theme-btn theme-red" onclick="setTheme('red', this)"></button>
                 </div>
             </div>
         </div>
@@ -794,6 +812,12 @@
             <div class="modal-header">
                 <h2>Статистика за месяц</h2>
                 <button class="close-btn" onclick="closeModal()">✕</button>
+            </div>
+
+            <div class="stats-month-nav">
+                <button class="calendar-nav" onclick="changeStatsMonth(-1)">←</button>
+                <h3 id="statsMonthLabel">Октябрь 2026</h3>
+                <button class="calendar-nav" onclick="changeStatsMonth(1)">→</button>
             </div>
             
             <div class="period-wrapper" id="periodWrapper1">
@@ -824,7 +848,7 @@
                 <div class="period-details" id="period2Details"></div>
             </div>
 
-            <div class="period-card" style="background: transparent; border: 1px solid rgba(255,204,0,0.2); margin-top: 12px;">
+            <div class="period-card" style="background: transparent; border: 1px solid var(--accent); margin-top: 12px;">
                 <div class="period-info">
                     <h4 style="color: var(--accent);">Всего за месяц</h4>
                     <p id="monthTotalCalls">0 звонков</p>
@@ -844,6 +868,7 @@
         const today = new Date();
         let currentDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         let viewDate = new Date(currentDate);
+        let statsMonthDate = new Date(currentDate);
 
         const priceResolvedInput = document.getElementById('priceResolved');
         const priceEscalatedInput = document.getElementById('priceEscalated');
@@ -865,16 +890,20 @@
         function setTheme(themeName, btnElement) {
             const root = document.documentElement;
             const themes = {
-                dark: { bg: '#0b0b0e', surface: 'rgba(24, 24, 27, 0.6)', surfaceLight: 'rgba(39, 39, 42, 0.7)', accent: '#ffcc00', border: 'rgba(255, 255, 255, 0.05)' },
-                blue: { bg: '#0a0f1c', surface: 'rgba(19, 27, 46, 0.6)', surfaceLight: 'rgba(30, 42, 69, 0.7)', accent: '#3b82f6', border: 'rgba(59, 130, 246, 0.1)' },
-                green: { bg: '#08130e', surface: 'rgba(17, 34, 26, 0.6)', surfaceLight: 'rgba(26, 54, 43, 0.7)', accent: '#10b981', border: 'rgba(16, 185, 129, 0.1)' },
-                pink: { bg: '#1f0914', surface: 'rgba(75, 25, 50, 0.6)', surfaceLight: 'rgba(105, 35, 70, 0.7)', accent: '#ff33a1', border: 'rgba(255, 51, 161, 0.15)' }
+                dark: { bg: '#0b0b0e', surface: 'rgba(24, 24, 27, 0.6)', surfaceLight: 'rgba(39, 39, 42, 0.7)', text: '#f4f4f5', textMuted: '#a1a1aa', accent: '#ffcc00', border: 'rgba(255, 255, 255, 0.05)' },
+                blue: { bg: '#0a0f1c', surface: 'rgba(19, 27, 46, 0.6)', surfaceLight: 'rgba(30, 42, 69, 0.7)', text: '#f4f4f5', textMuted: '#a1a1aa', accent: '#3b82f6', border: 'rgba(59, 130, 246, 0.1)' },
+                green: { bg: '#08130e', surface: 'rgba(17, 34, 26, 0.6)', surfaceLight: 'rgba(26, 54, 43, 0.7)', text: '#f4f4f5', textMuted: '#a1a1aa', accent: '#10b981', border: 'rgba(16, 185, 129, 0.1)' },
+                pink: { bg: '#1f0914', surface: 'rgba(75, 25, 50, 0.6)', surfaceLight: 'rgba(105, 35, 70, 0.7)', text: '#f4f4f5', textMuted: '#a1a1aa', accent: '#ff33a1', border: 'rgba(255, 51, 161, 0.15)' },
+                white: { bg: '#f4f4f5', surface: 'rgba(255, 255, 255, 0.7)', surfaceLight: 'rgba(228, 228, 231, 0.8)', text: '#18181b', textMuted: '#71717a', accent: '#3b82f6', border: 'rgba(0, 0, 0, 0.1)' },
+                red: { bg: '#140000', surface: 'rgba(60, 0, 0, 0.6)', surfaceLight: 'rgba(90, 0, 0, 0.7)', text: '#f4f4f5', textMuted: '#a1a1aa', accent: '#ff0000', border: 'rgba(255, 0, 0, 0.15)' }
             };
 
             const t = themes[themeName];
             root.style.setProperty('--bg', t.bg);
             root.style.setProperty('--surface', t.surface);
             root.style.setProperty('--surface-light', t.surfaceLight);
+            root.style.setProperty('--text', t.text);
+            root.style.setProperty('--text-muted', t.textMuted);
             root.style.setProperty('--accent', t.accent);
             root.style.setProperty('--border-color', t.border);
 
@@ -889,6 +918,8 @@
         if(savedTheme === 'blue') setTheme('blue', themeBtns[1]);
         if(savedTheme === 'green') setTheme('green', themeBtns[2]);
         if(savedTheme === 'pink') setTheme('pink', themeBtns[3]);
+        if(savedTheme === 'white') setTheme('white', themeBtns[4]);
+        if(savedTheme === 'red') setTheme('red', themeBtns[5]);
 
         function toggleX2() {
             const day = getDayData();
@@ -909,7 +940,15 @@
             }
         }
 
-        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function openModal(id) {
+            if (id === 'periodsModal') {
+                statsMonthDate = new Date(currentDate);
+                updateStatsMonthLabel();
+                calculatePeriods(parseFloat(priceResolvedInput.value) || 0, parseFloat(priceEscalatedInput.value) || 0);
+            }
+            document.getElementById(id).classList.add('active');
+        }
+
         function closeModal(event) {
             if (event && event.target !== event.currentTarget) return;
             document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('active'));
@@ -995,6 +1034,17 @@
             renderCalendar();
         }
 
+        function updateStatsMonthLabel() {
+            const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+            document.getElementById('statsMonthLabel').innerText = `${monthNames[statsMonthDate.getMonth()]} ${statsMonthDate.getFullYear()}`;
+        }
+
+        function changeStatsMonth(direction) {
+            statsMonthDate.setMonth(statsMonthDate.getMonth() + direction);
+            updateStatsMonthLabel();
+            calculatePeriods(parseFloat(priceResolvedInput.value) || 0, parseFloat(priceEscalatedInput.value) || 0);
+        }
+
         function getDayData() {
             const key = formatDateKey(currentDate);
             if (!data[key]) data[key] = { resolved: 0, escalated: 0, rr: 0, isX2: false };
@@ -1063,8 +1113,8 @@
             let p1Days = [];
             let p2Days = [];
 
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
+            const year = statsMonthDate.getFullYear();
+            const month = statsMonthDate.getMonth();
             const prefix = `${year}-${String(month + 1).padStart(2, '0')}`;
 
             for (const [dateStr, d] of Object.entries(data)) {
@@ -1132,7 +1182,7 @@
                 row.style.cursor = 'pointer';
                 row.onclick = (e) => {
                     e.stopPropagation();
-                    currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), d.day);
+                    currentDate = new Date(statsMonthDate.getFullYear(), statsMonthDate.getMonth(), d.day);
                     viewDate = new Date(currentDate);
                     renderCalendar();
                     updateStatsForDay();
