@@ -387,7 +387,7 @@
 
         .modal-overlay.active { opacity: 1; visibility: visible; }
 
-        .modal-content {
+       .modal-content {
             background: var(--surface);
             backdrop-filter: blur(25px);
             -webkit-backdrop-filter: blur(25px);
@@ -403,6 +403,12 @@
             overflow-y: auto;
             box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
             color: var(--text);
+            scrollbar-width: none; 
+            -ms-overflow-style: none;
+        }
+
+        .modal-content::-webkit-scrollbar {
+            display: none; 
         }
 
         .modal-overlay.active .modal-content { transform: translateY(0); }
@@ -591,9 +597,17 @@
             background: rgba(0,0,0,0.05);
         }
         
-        .period-wrapper.open .period-details {
+           .period-wrapper.open .period-details {
             max-height: 500px;
             overflow-y: auto;
+            scrollbar-width: none; 
+            -ms-overflow-style: none; 
+        }
+
+        .period-wrapper.open .period-details::-webkit-scrollbar {
+            display: none;
+            width: 0;
+            height: 0;
         }
 
         .day-stat-row {
